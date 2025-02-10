@@ -27,12 +27,12 @@ jobs:
             
       - name: Set variables 
         run: |
-          echo "XC_BEARER_TOKEN=`echo -n "${{ secrets.XC_BEARER_TOKEN }}`" >> $GITHUB_ENV
-          echo "OAS=`echo -n "${{ vars.OAS }}-${{ vars.oasver }}`" >> $GITHUB_ENV
+          echo "XC_BEARER_TOKEN=`echo -n "${{ secrets.XC_APITOKEN }}`" >> $GITHUB_ENV
+          echo "OAS=`echo -n "${{ vars.OAS }}-${{ vars.OASVER }}`" >> $GITHUB_ENV
 
       - name: Get the OAS
         run: |
-          curl -X GET --location 'https://${{ vars.TENANT }}/api/object_store/namespaces/${{secrets.NAMESPACE}}/stored_objects/swagger/${{vars.OAS}}/${{vars.OASVER}}' -H 'Authorization: Bearer APIToken ${{ secrets.XC_BEARER_TOKEN }}' -o ${{ env.OAS }}.json 
+          curl -X GET --location 'https://${{ secrets.XC_TENANT }}/api/object_store/namespaces/${{var.NAMESPACE}}/stored_objects/swagger/${{vars.OAS}}/${{vars.OASVER}}' -H 'Authorization: Bearer APIToken ${{ secrets.XC_APITOKEN }}' -o ./xc2n1/oas/${{ env.OAS }}.json 
         working-directory: ${{ github.workspace }}
 
       - name: Commit and Push the OAS
@@ -41,6 +41,4 @@ jobs:
           git config --global user.email "${{ github.actor }}@users.noreply.github.com"
           git add .json
           git commit -m 'Committing updated OAS'
-          git push    
-
-  ß
+          git push
