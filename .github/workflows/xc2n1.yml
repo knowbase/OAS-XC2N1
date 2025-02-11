@@ -61,11 +61,10 @@ jobs:
       - name: Set variables 
         run: |
           export OAS="${{ vars.OAS }}-${{ vars.OASVER }}.json"
-          echo "XC2N1_TIMESTAMP=`date -u +"%Y-%m-%dT%H:%M:%SZ"`" >> $GITHUB_ENV
-          echo "XC2N1_COMMIT_HASH=$(git show --pretty=format:"%H %s" -s HEAD)" >> $GITHUB_ENV
-          echo "XC2N1_BRANCH=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
-          echo "NGINX_APIG_CONFIG_FILE=`echo \# Modified by $${{ github.actor }} $(date) branch: ${{ env.XC2N1_BRANCH }} commit hash: ${{ env.XC2N1_COMMIT_HASH }} | cat - xc2n1/etc/nginx/conf.d/apig.conf | base64 -w 0`" >> $GITHUB_ENV
-          echo "NGINX_APIG_CONFIG_FILE_SIZE=`wc -c < xc2n1/etc/nginx/nginx.conf`" >> $GITHUB_ENV
+          export "XC2N1_TIMESTAMP=`date -u +"%Y-%m-%dT%H:%M:%SZ"`" >> $GITHUB_ENV
+          export "XC2N1_COMMIT_HASH=$(git show --pretty=format:"%H %s" -s HEAD)" >> $GITHUB_ENV
+          export "XC2N1_BRANCH=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+
 
       - name: Install tools
         run: |
@@ -76,6 +75,8 @@ jobs:
           git pull
           ./xc2n1/scripts/oas2nginx.sh ./xc2n1/oas/${{ env.OAS }} > ./xc2n1/conf/etc/nginx/conf.d/apig.conf
           sed -i '/^oas2nginx.sh:/d' ./xc2n1/conf/etc/nginx/conf.d/apig.conf
+          export "NGINX_APIG_CONFIG_FILE=`echo \# Modified by https://github.com/knowbase/wiley-wombat $(date) branch: ${{ env.N1SC_BRANCH }} commit hash: ${{ env.N1SC_COMMIT_HASH }} | cat - xc2n1/etc/nginx/conf.d/apig.conf | base64 -w 0`" >> $GITHUB_ENV
+          export "NGINX_APIG_CONFIG_FILE_SIZE=`wc -c < xc2n1/etc/nginx/nginx.conf`" >> $GITHUB_ENV
 
       - name: PATCH the instance config
         run: |
