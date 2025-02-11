@@ -73,14 +73,14 @@ jobs:
       - name: Process OAS
         run: |
           git pull
-          ./xc2n1/scripts/oas2nginx.sh ./xc2n1/oas/${{ env.OAS }} > ./xc2n1/conf/etc/nginx/conf.d/apig.conf
-          sed -i '/^oas2nginx.sh:/d' ./xc2n1/conf/etc/nginx/conf.d/apig.conf
-          echo "NGINX_APIG_CONFIG_FILE=`echo \# Modified by https://github.com/knowbase/wiley-wombat $(date) branch: ${{ env.N1SC_BRANCH }} commit hash: ${{ env.N1SC_COMMIT_HASH }} | cat - xc2n1/conf/etc/nginx/conf.d/apig.conf | base64 -w 0`" >> $GITHUB_ENV
-          echo "NGINX_APIG_CONFIG_FILE_SIZE=`wc -c < xc2n1/conf/etc/nginx/conf.d/apig.conf`" >> $GITHUB_ENV
+          ./xc2n1/scripts/oas2nginx.sh ./xc2n1/oas/${{ env.OAS }} > ./xc2n1/conf/etc/nginx/api_conf.d/crapi_api.conf
+          sed -i '/^oas2nginx.sh:/d' ./xc2n1/conf/etc/nginx/api_conf.d/crapi_api.conf
+          echo "NGINX_APIG_CONFIG_FILE=`echo \# Modified by https://github.com/knowbase/wiley-wombat $(date) branch: ${{ env.N1SC_BRANCH }} commit hash: ${{ env.N1SC_COMMIT_HASH }} | cat - xc2n1/conf/etc/nginx/conf.d/crapi_api.conf | base64 -w 0`" >> $GITHUB_ENV
+          echo "NGINX_APIG_CONFIG_FILE_SIZE=`wc -c < xc2n1/conf/etc/nginx/api_conf.d/crapi_api.conf`" >> $GITHUB_ENV
 
       - name: PATCH the instance config
         run: |
-          curl -X PATCH --location 'https://${{ secrets.XC_TENANT }}/api/nginx/one/namespaces/default/instances/${{ vars.APIG_INSTANCE }}/config' -H 'Authorization: Bearer APIToken ${{ secrets.XC_APITOKEN }}' --data '{ "aux": [], "conf_path": "/etc/nginx/conf.d/apig.conf", "configs": [ { "files": [ { "contents": "${{ env.NGINX_APIG_CONFIG_FILE }}", "mtime": "1970-01-01T00:00:00Z", "name": "apig.conf", "size": ${{ env.NGINX_APIG_CONFIG_FILE_SIZE }} } ], "name": "/etc/nginx/conf.d" } ] }' -H "Content-Type: application/json" -o response.json
+          curl -X PATCH --location 'https://${{ secrets.XC_TENANT }}/api/nginx/one/namespaces/default/instances/${{ vars.APIG_INSTANCE }}/config' -H 'Authorization: Bearer APIToken ${{ secrets.XC_APITOKEN }}' --data '{ "aux": [], "conf_path": "/etc/nginx/api_conf.d/crapi_api.conf", "configs": [ { "files": [ { "contents": "${{ env.NGINX_APIG_CONFIG_FILE }}", "mtime": "1970-01-01T00:00:00Z", "name": "crapi_api.conf", "size": ${{ env.NGINX_APIG_CONFIG_FILE_SIZE }} } ], "name": "/etc/nginx/api_conf.d" } ] }' -H "Content-Type: application/json" -o response.json
           cat response.json
           echo "PUBLICATION_ID=`cat response.json | jq -c '.object_id'`" >> $GITHUB_ENV
       
@@ -102,7 +102,7 @@ jobs:
         run: |
           git config --global user.name "${{ github.actor }}"
           git config --global user.email "${{ github.actor }}@users.noreply.github.com"
-          git add ./xc2n1/conf/etc/nginx/conf.d/apig.conf
-          git mv ./xc2n1/conf/etc/nginx/conf.d/apig.conf ./xc2n1/conf/etc/nginx/conf.d/apig.conf.${{ env.OAS }}
+          git add ./xc2n1/conf/etc/nginx/api_conf.d/crapi_api.conf
+          git mv ./xc2n1/conf/etc/nginx/api_conf.d/crapi_api.conf ./xc2n1/conf/etc/nginx/api_conf.d/crapi_api.conf.${{ env.OAS }}
           git commit -m 'Committing updated test conf for ${{ env.OAS }}'
           git push
