@@ -2,9 +2,9 @@ name: OAS XC2N1
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "oas-deploy" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "oas-deploy" ]
   workflow_dispatch:
 
 env:
