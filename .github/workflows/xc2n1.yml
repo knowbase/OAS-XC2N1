@@ -102,7 +102,7 @@ jobs:
         run: |
           git config --global user.name "${{ github.actor }}"
           git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+          git add ./xc2n1/conf/etc/nginx/conf.d/apig.conf
           git mv ./xc2n1/conf/etc/nginx/conf.d/apig.conf ./xc2n1/conf/etc/nginx/conf.d/apig.conf.${{ env.OAS }}
-          git add ./xc2n1/conf/etc/nginx/conf.d/apig.conf.${{ env.OAS }}
           git commit -m 'Committing updated test conf for ${{ env.OAS }}'
           git push
