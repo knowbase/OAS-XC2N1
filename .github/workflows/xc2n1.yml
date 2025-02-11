@@ -1,33 +1,24 @@
-name: XC2N1
+name: OAS XC2N1
 
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
     branches: [ "main" ]
-  #pull_request:
-    #branches: [ "main" ]
-
-  # Allows you to run this workflow manually from the Actions tab
+  pull_request:
+    branches: [ "main" ]
   workflow_dispatch:
 
 env:
   OAS: ${{ vars.OAS }}-${{ vars.OASVER }}.json
 
 jobs:
-  # This workflow contains a single job called "build"
   XC_Pull:
-    # The type of runner that the job will run on
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+
       - uses: actions/checkout@v4
             
       - name: Set variables 
         run: |
-          # echo "XC_BEARER_TOKEN=`echo -n "${{ secrets.XC_APITOKEN }}`" >> $GITHUB_ENV
           export OAS="${{ vars.OAS }}-${{ vars.OASVER }}"
 
       - name: Install tools
@@ -36,26 +27,23 @@ jobs:
 
       - name: Get the OAS
         run: |
-          curl -X GET --location 'https://${{ secrets.XC_TENANT }}/api/object_store/namespaces/${{vars.NAMESPACE}}/stored_objects/swagger/${{vars.OAS}}/${{vars.OASVER}}' -H 'Authorization: Bearer APIToken ${{ secrets.XC_APITOKEN }}' -o ./xc2n1/oas/oas.json
+          curl -X GET --location 'https://${{ secrets.XC_TENANT }}/api/object_store/namespaces/${{vars.NAMESPACE}}/stored_objects/swagger/${{vars.OAS}}/${{vars.OASVER}}' -H 'Authorization: Bearer APIToken ${{ secrets.XC_APITOKEN }}' -o ./oas/oas.json
         working-directory: ${{ github.workspace }}
 
       - name: Process and Push the OAS
         run: |
-          yq -Poy ./xc2n1/oas/oas.json > ./xc2n1/oas/${{ env.OAS }} && sed -i '/metadata:/,/string_value: |/d' ./xc2n1/oas/${{ env.OAS }} && sed -i '/content_format: json/d' ./xc2n1/oas/${{ env.OAS }}
+          yq -Poy ./oas/oas.json > ./oas/${{ env.OAS }} && sed -i '/metadata:/,/string_value: |/d' ./oas/${{ env.OAS }} && sed -i '/content_format: json/d' ./oas/${{ env.OAS }}
           git config --global user.name "${{ github.actor }}"
           git config --global user.email "${{ github.actor }}@users.noreply.github.com"
-          git add ./xc2n1/oas/${{ env.OAS }}
+          git add ./oas/${{ env.OAS }}
           git commit -m 'Committing updated OAS ${{ env.OAS }}'
           git push
 
   N1_Push:
-    # The type of runner that the job will run on
     runs-on: ubuntu-latest
     needs: XC_Pull
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+
       - uses: actions/checkout@v4
 
       - name: Set variables 
@@ -73,10 +61,10 @@ jobs:
       - name: Process OAS
         run: |
           git pull
-          ./xc2n1/scripts/oas2nginx.sh ./xc2n1/oas/${{ env.OAS }} > ./xc2n1/conf/etc/nginx/api_conf.d/crapi_api.conf
-          sed -i '/^oas2nginx.sh:/d' ./xc2n1/conf/etc/nginx/api_conf.d/crapi_api.conf
-          echo "NGINX_APIG_CONFIG_FILE=`cat xc2n1/conf/etc/nginx/api_conf.d/crapi_api.conf | base64 -w 0`" >> $GITHUB_ENV
-          echo "NGINX_APIG_CONFIG_FILE_SIZE=`wc -c < xc2n1/conf/etc/nginx/api_conf.d/crapi_api.conf`" >> $GITHUB_ENV
+          ./scripts/oas2nginx.sh ./oas/${{ env.OAS }} > ./conf/etc/nginx/api_conf.d/crapi_api.conf
+          sed -i '/^oas2nginx.sh:/d' ./conf/etc/nginx/api_conf.d/crapi_api.conf
+          echo "NGINX_APIG_CONFIG_FILE=`cat conf/etc/nginx/api_conf.d/crapi_api.conf | base64 -w 0`" >> $GITHUB_ENV
+          echo "NGINX_APIG_CONFIG_FILE_SIZE=`wc -c < conf/etc/nginx/api_conf.d/crapi_api.conf`" >> $GITHUB_ENV
 
       - name: PATCH the instance config
         run: |
@@ -102,7 +90,7 @@ jobs:
         run: |
           git config --global user.name "${{ github.actor }}"
           git config --global user.email "${{ github.actor }}@users.noreply.github.com"
-          git add ./xc2n1/conf/etc/nginx/api_conf.d/crapi_api.conf
-          git mv ./xc2n1/conf/etc/nginx/api_conf.d/crapi_api.conf ./xc2n1/conf/etc/nginx/api_conf.d/crapi_api.conf.${{ env.OAS }}
+          git add ./conf/etc/nginx/api_conf.d/crapi_api.conf
+          git mv ./conf/etc/nginx/api_conf.d/crapi_api.conf ./conf/etc/nginx/api_conf.d/crapi_api.conf.${{ env.OAS }}
           git commit -m 'Committing updated test conf for ${{ env.OAS }}'
           git push
