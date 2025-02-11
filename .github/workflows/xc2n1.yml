@@ -80,7 +80,7 @@ jobs:
 
       - name: PATCH the instance config
         run: |
-          curl -X PATCH --location 'https://${{ secrets.XC_TENANT }}/api/nginx/one/namespaces/default/instances/${{ vars.APIG_INSTANCE }}/config' -H 'Authorization: Bearer APIToken ${{ secrets.XC_APITOKEN }}' --data '{ "aux": [], "conf_path": "/etc/nginx/conf.d/", "configs": [ { "files": [ { "contents": "${{ env.NGINX_APIG_CONFIG_FILE }}", "mtime": "1970-01-01T00:00:00Z", "name": "apig.conf", "size": ${{ env.NGINX_APIG_CONFIG_FILE_SIZE }} } ], "name": "/etc/nginx/conf.d" } ] }' -H "Content-Type: application/json" -o response.json
+          curl -X PATCH --location 'https://${{ secrets.XC_TENANT }}/api/nginx/one/namespaces/default/instances/${{ vars.APIG_INSTANCE }}/config' -H 'Authorization: Bearer APIToken ${{ secrets.XC_APITOKEN }}' --data '{ "aux": [], "conf_path": "/etc/nginx/conf.d/apig.conf", "configs": [ { "files": [ { "contents": "${{ env.NGINX_APIG_CONFIG_FILE }}", "mtime": "1970-01-01T00:00:00Z", "name": "apig.conf", "size": ${{ env.NGINX_APIG_CONFIG_FILE_SIZE }} } ], "name": "/etc/nginx/conf.d" } ] }' -H "Content-Type: application/json" -o response.json
           cat response.json
           echo "PUBLICATION_ID=`cat response.json | jq -c '.object_id'`" >> $GITHUB_ENV
       
