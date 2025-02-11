@@ -75,7 +75,7 @@ jobs:
           git pull
           ./xc2n1/scripts/oas2nginx.sh ./xc2n1/oas/${{ env.OAS }} > ./xc2n1/conf/etc/nginx/api_conf.d/crapi_api.conf
           sed -i '/^oas2nginx.sh:/d' ./xc2n1/conf/etc/nginx/api_conf.d/crapi_api.conf
-          echo "NGINX_APIG_CONFIG_FILE=`cat xc2n1/conf/etc/nginx/conf.d/crapi_api.conf | base64 -w 0`" >> $GITHUB_ENV
+          echo "NGINX_APIG_CONFIG_FILE=`cat xc2n1/conf/etc/nginx/api_conf.d/crapi_api.conf | base64 -w 0`" >> $GITHUB_ENV
           echo "NGINX_APIG_CONFIG_FILE_SIZE=`wc -c < xc2n1/conf/etc/nginx/api_conf.d/crapi_api.conf`" >> $GITHUB_ENV
 
       - name: PATCH the instance config
