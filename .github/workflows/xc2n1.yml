@@ -29,6 +29,7 @@ jobs:
         run: |
           # echo "XC_BEARER_TOKEN=`echo -n "${{ secrets.XC_APITOKEN }}`" >> $GITHUB_ENV
           export OAS="${{ vars.OAS }}-${{ vars.OASVER }}"
+
       - name: Install tools
         run: |
           sudo snap install yq
@@ -57,10 +58,17 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
 
+      - name: Set variables 
+        run: |
+          # echo "XC_BEARER_TOKEN=`echo -n "${{ secrets.XC_APITOKEN }}`" >> $GITHUB_ENV
+          export OAS="${{ vars.OAS }}-${{ vars.OASVER }}.json"
+
+      - name: Install tools
+        run: |
+          pip install shyaml
+
       - name: Process OAS
         run: |
-          sudo pip install shyaml
-          export OAS="${{ vars.OAS }}-${{ vars.OASVER }}"
           ./xc2n1/scripts/oas2nginx.sh ./xc2n1/oas/${{ env.OAS }} > ./xc2n1/conf/etc/nginx/conf.d/apig.conf
           git config --global user.name "${{ github.actor }}"
           git config --global user.email "${{ github.actor }}@users.noreply.github.com"
