@@ -40,7 +40,7 @@ jobs:
 
       - name: Process and Push the OAS
         run: |
-          yq -Poy ./xc2n1/oas/oas.json > ./xc2n1/oas/${{ env.OAS }} && sed -i '/metadata:/,/string_value: |/d' ./xc2n1/oas/${{ env.OAS }} && sed -i '/content_format: json//d' ./xc2n1/oas/${{ env.OAS }}
+          yq -Poy ./xc2n1/oas/oas.json > ./xc2n1/oas/${{ env.OAS }} && sed -i '/metadata:/,/string_value: |/d' ./xc2n1/oas/${{ env.OAS }} && sed -i '/content_format: json/d' ./xc2n1/oas/${{ env.OAS }}
           git config --global user.name "${{ github.actor }}"
           git config --global user.email "${{ github.actor }}@users.noreply.github.com"
           git add ./xc2n1/oas/${{ env.OAS }}
