@@ -70,7 +70,7 @@ jobs:
       - name: Process OAS
         run: |
           git pull
-          ./xc2n1/scripts/oas2nginx.sh ./xc2n1/oas/${{ env.OAS }} > ./xc2n1/conf/etc/nginx/conf.d/apig.conf
+          ./xc2n1/scripts/oas2nginx.sh ./xc2n1/oas/${{ env.OAS }} > ./xc2n1/conf/etc/nginx/conf.d/apig.conf.${{ env.OAS }}
           git config --global user.name "${{ github.actor }}"
           git config --global user.email "${{ github.actor }}@users.noreply.github.com"
           git add ./xc2n1/conf/etc/nginx/conf.d/apig.conf.${{ env.OAS }}
