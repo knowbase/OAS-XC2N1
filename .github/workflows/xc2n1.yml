@@ -10,7 +10,10 @@ on:
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-    
+
+env:
+  OAS: ${{ vars.OAS }}-${{ vars.OASVER }}.json
+
 jobs:
   # This workflow contains a single job called "build"
   XC_Pull:
@@ -24,12 +27,12 @@ jobs:
             
       - name: Set variables 
         run: |
-          echo "XC_BEARER_TOKEN=`echo -n "${{ secrets.XC_APITOKEN }}`" >> $GITHUB_ENV
-          echo "OAS=`echo -n "${{ vars.OAS }}-${{ vars.OASVER }}`" >> $GITHUB_ENV
+          # echo "XC_BEARER_TOKEN=`echo -n "${{ secrets.XC_APITOKEN }}`" >> $GITHUB_ENV
+          export OAS="${{ vars.OAS }}-${{ vars.OASVER }}"
 
       - name: Get the OAS
         run: |
-          curl -X GET --location 'https://${{ secrets.XC_TENANT }}/api/object_store/namespaces/${{vars.NAMESPACE}}/stored_objects/swagger/${{vars.OAS}}/${{vars.OASVER}}' -H 'Authorization: Bearer APIToken ${{ secrets.XC_APITOKEN }}' -o ./xc2n1/oas/${{ env.OAS }}.json 
+          curl -X GET --location 'https://${{ secrets.XC_TENANT }}/api/object_store/namespaces/${{vars.NAMESPACE}}/stored_objects/swagger/${{vars.OAS}}/${{vars.OASVER}}' -H 'Authorization: Bearer APIToken ${{ secrets.XC_APITOKEN }}' -o ./xc2n1/oas/${{ env.OAS }}
         working-directory: ${{ github.workspace }}
 
       - name: Commit and Push the OAS
@@ -37,5 +40,5 @@ jobs:
           git config --global user.name "${{ github.actor }}"
           git config --global user.email "${{ github.actor }}@users.noreply.github.com"
           git add .json
-          git commit -m 'Committing updated OAS'
+          git commit -m 'Committing updated OAS ${{ env.OAS }}'
           git push
