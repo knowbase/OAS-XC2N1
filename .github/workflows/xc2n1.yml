@@ -60,8 +60,12 @@ jobs:
 
       - name: Set variables 
         run: |
-          # echo "XC_BEARER_TOKEN=`echo -n "${{ secrets.XC_APITOKEN }}`" >> $GITHUB_ENV
           export OAS="${{ vars.OAS }}-${{ vars.OASVER }}.json"
+          echo "XC2N1_TIMESTAMP=`date -u +"%Y-%m-%dT%H:%M:%SZ"`" >> $GITHUB_ENV
+          echo "XC2N1_COMMIT_HASH=$(git show --pretty=format:"%H %s" -s HEAD)" >> $GITHUB_ENV
+          echo "XC2N1_BRANCH=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+          echo "NGINX_APIG_CONFIG_FILE=`echo \# Modified by $${{ github.actor }} $(date) branch: ${{ env.XC2N1_BRANCH }} commit hash: ${{ env.XC2N1_COMMIT_HASH }} | cat - xc2n1/etc/nginx/conf.d/apig.conf | base64 -w 0`" >> $GITHUB_ENV
+          echo "NGINX_APIG_CONFIG_FILE_SIZE=`wc -c < xc2n1/etc/nginx/nginx.conf`" >> $GITHUB_ENV
 
       - name: Install tools
         run: |
@@ -70,9 +74,34 @@ jobs:
       - name: Process OAS
         run: |
           git pull
-          ./xc2n1/scripts/oas2nginx.sh ./xc2n1/oas/${{ env.OAS }} > ./xc2n1/conf/etc/nginx/conf.d/apig.conf.${{ env.OAS }}
+          ./xc2n1/scripts/oas2nginx.sh ./xc2n1/oas/${{ env.OAS }} > ./xc2n1/conf/etc/nginx/conf.d/apig.conf
+          sed -i '/^oas2nginx.sh:/d' ./xc2n1/conf/etc/nginx/conf.d/apig.conf
+
+      - name: PATCH the instance config
+        run: |
+          curl -X PATCH --location 'https://${{ secrets.XC_TENANT }}/api/nginx/one/namespaces/default/instances/${{ vars.APIG_INSTANCE }}/config' -H 'Authorization: Bearer APIToken ${{ secrets.XC_APITOKEN }}' --data '{ "aux": [], "conf_path": "/etc/nginx/conf.d/apig.conf", "configs": [ { "files": [ { "contents": "${{ env.NGINX_APIG_CONFIG_FILE }}", "mtime": "1970-01-01T00:00:00Z", "name": "apig.conf", "size": ${{ env.NGINX_APIG_CONFIG_FILE_SIZE }} } ], "name": "/etc/nginx" } ] }' -H "Content-Type: application/json" -o response.json
+          cat response.json
+          echo "PUBLICATION_ID=`cat response.json | jq -c '.object_id'`" >> $GITHUB_ENV
+      
+      - name: Check publication status1
+        run: |
+          curl -X GET https://${{ secrets.XC_TENANT }}/api/nginx/one/namespaces/default/instances/${{ vars.APIG_INSTANCE }}/publications/${{ env.PUBLICATION_ID }}  -H 'Authorization: Bearer APIToken ${{ secrets.XC_APITOKEN }}' -o response.json
+          cat response.json | jq -c .status
+
+      - name: Sleep for 15 seconds
+        run: sleep 15s
+        shell: bash
+      
+      - name: Check publication status2
+        run: |
+          curl -X GET https://${{ secrets.XC_TENANT }}/api/nginx/one/namespaces/default/instances/${{ vars.APIG_INSTANCE }}/publications/${{ env.PUBLICATION_ID }}  -H 'Authorization: Bearer APIToken ${{ secrets.XC_APITOKEN }}' -o response.json
+          cat response.json | jq -c .status
+
+      - name: Push the updated APIG conf
+        run: |
           git config --global user.name "${{ github.actor }}"
           git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+          git mv ./xc2n1/conf/etc/nginx/conf.d/apig.conf ./xc2n1/conf/etc/nginx/conf.d/apig.conf.${{ env.OAS }}
           git add ./xc2n1/conf/etc/nginx/conf.d/apig.conf.${{ env.OAS }}
           git commit -m 'Committing updated test conf for ${{ env.OAS }}'
           git push
